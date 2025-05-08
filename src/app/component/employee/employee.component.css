@@ -1,0 +1,11 @@
+.mdc-card {
+  margin: 2%;
+}
+
+.mat-mdc-card-header {
+  gap: 10px;
+}
+
+.mdc-button {
+  margin-right: 10px;
+}
