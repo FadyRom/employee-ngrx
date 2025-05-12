@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -15,7 +15,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { Employee } from '../../model/employee.model';
 import { EmployeeService } from '../../services/employee.service';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -34,10 +34,11 @@ import { ToastrService } from 'ngx-toastr';
   templateUrl: './add-employee.component.html',
   styleUrl: './add-employee.component.css',
 })
-export class AddEmployeeComponent {
+export class AddEmployeeComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private ref = inject(MatDialogRef<AddEmployeeComponent>);
   private toastrService = inject(ToastrService);
+  private data = inject(MAT_DIALOG_DATA)
 
   myForm = new FormGroup({
     id: new FormControl(0, Validators.required),
@@ -46,6 +47,29 @@ export class AddEmployeeComponent {
     role: new FormControl('', Validators.required),
     salary: new FormControl(0, Validators.required),
   });
+
+  dialoData:any;
+  isEdit = false
+
+  ngOnInit(): void {
+    this.dialoData = this.data
+
+    if (this.dialoData.code > 0) {
+      this.employeeService.getEmployee(this.dialoData.code).subscribe((item)=>{
+        let _data = item
+        if (_data != null) {
+          this.isEdit = true
+          this.myForm.setValue({
+            id: _data.id,
+            name: _data.name,
+            doj: _data.doj,
+            role: _data.role,
+            salary: _data.salary
+          })
+        }
+      })
+    }
+  }
 
   saveForm() {
     if (this.myForm.controls.id.value == 0) {
@@ -59,12 +83,22 @@ export class AddEmployeeComponent {
         role: this.myForm.controls.role.value as string,
         salary: this.myForm.controls.salary.value as number,
       };
-      this.employeeService.create(data).subscribe({
-        complete: () => {
-          this.toastrService.success('Saved', 'Created');
-          this.closePopup();
-        },
-      });
+      if (!this.isEdit) {
+
+        this.employeeService.create(data).subscribe({
+          complete: () => {
+            this.toastrService.success('Saved', 'Created');
+            this.closePopup();
+          },
+        });
+      }else{
+        this.employeeService.update(data).subscribe({
+          complete: () => {
+            this.toastrService.success('Saved', 'updated');
+            this.closePopup();
+          },
+        });
+      }
     }
   }
 
